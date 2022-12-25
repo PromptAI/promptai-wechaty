@@ -1,6 +1,8 @@
 import {ScanStatus, log} from "wechaty";
 import qrTerm from "qrcode-terminal";
 import {applyChat, sendMsg} from "./chatbot.js"
+import {FileBox} from 'file-box'
+import {getBaseUrl} from '../utils/request.js'
 
 let username
 let chatSession = {}
@@ -38,14 +40,9 @@ export function onLogout(user) {
 
 export async function onMessage(message, bot) {
 
-    log.info(`${message.type()}`)
-
     log.info("StarterBot ******", JSON.stringify(message));
-
     let msg = message.text();
     let sessionId = message?.payload?.talkerId
-
-    log.info(`msg: ${msg}, username: ${username},talkerId:${sessionId}`)
     // 1. 会话初始化
     if (msg.startsWith("@" + username + ' 初始化会话') || chatSession[sessionId] === undefined) {
         return await initChat(sessionId, bot)
@@ -57,7 +54,6 @@ export async function onMessage(message, bot) {
         let reply = await sendMsg(chatId, message, message);
 
         log.info(`msg reply from bot:${JSON.stringify(reply)}`)
-        log.info(`ans:${reply.answers}`)
         processMessage(reply, bot)
     }
 }
@@ -95,13 +91,14 @@ export function isAttachment(value) {
     return false;
 }
 
-export function processMessage(reply, bot) {
+export async function processMessage(reply, bot) {
     const answers =
         reply.answers?.length > 0
             ? reply.answers.filter((m) => !m.custom)
             : [{text: '换个问题试一试'}];
-    answers.forEach(async (item) => {
 
+    for (let i = 0; i < answers.length; i++) {
+        let item = answers[i]
         //1. 处理按钮回复 暂时忽略
         if (item?.buttons?.length > 0) {
 
@@ -109,16 +106,18 @@ export function processMessage(reply, bot) {
 
         //2. 处理图片回复
         if (item.image) {
-            const fileBox = FileBox.fromUrl(item.image)
+            log.info(`image url:${getBaseUrl() + item.image}`)
+            const fileBox = FileBox.fromUrl(getBaseUrl() + item.image, `${item.image + '.jpeg'}`)
             //发送图片
             await bot.say(fileBox)
-            return
         }
 
         //3. 处理文件回复
         if (isAttachment(item.text)) {
             let files = decodeAttachmentText(item.text)
-            const fileBox = FileBox.fromUrl(files.href, files.name)
+            log.info(`file url: ${getBaseUrl() + files.href}`)
+
+            const fileBox = FileBox.fromUrl(getBaseUrl() + files.href, files.name)
             //发送图片
             await bot.say(fileBox)
             return
@@ -127,6 +126,5 @@ export function processMessage(reply, bot) {
         if (item.text) {
             await bot.say(item.text);
         }
-
-    })
+    }
 }

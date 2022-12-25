@@ -97,3 +97,7 @@ export function del(url, data, config) {
         params: data,
     });
 }
+
+export function getBaseUrl() {
+    return baseURL;
+}
