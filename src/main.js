@@ -6,8 +6,8 @@ const bot = WechatyBuilder.build({
   puppet: "wechaty-puppet-wechat4u",
 });
 
-const onMessageWithBot = (msg) => {
-  onMessage(msg, bot)
+const onMessageWithBot =async (msg) => {
+ await onMessage(msg, bot)
 }
 bot.on("scan", onScan);
 bot.on("login", onLogin);

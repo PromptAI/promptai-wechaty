@@ -42,31 +42,35 @@ export async function onMessage(message, bot) {
 
     log.info("StarterBot ******", JSON.stringify(message));
     let msg = message.text();
-    let sessionId = message?.payload?.talkerId
+    let talkerId = message?.payload?.talkerId
+
     // 1. 会话初始化
-    if (msg.startsWith("@" + username + ' 初始化会话') || chatSession[sessionId] === undefined) {
-        return await initChat(sessionId, bot)
+    if (msg.startsWith("@" + username + ' 初始化会话') || chatSession[talkerId] === undefined) {
+        return await initChat(talkerId, message, bot)
     }
     // 2. 处理发送的消息
-    let chatId = chatSession[sessionId]
+    let chatId = chatSession[talkerId]
+    log.info(`talkerId:${talkerId}, chatId:${chatId}`)
     if (msg.startsWith("@" + username) && chatId !== undefined) {
-        let message = msg.substr(username.length + 1);
-        let reply = await sendMsg(chatId, message, message);
+
+        log.info(`'rec from:'${talkerId},message:${msg} `)
+        let chatMsg = msg.substr(username.length + 1);
+        let reply = await sendMsg(chatId, chatMsg, chatMsg);
 
         log.info(`msg reply from bot:${JSON.stringify(reply)}`)
-        processMessage(reply, bot)
+        await processMessage(reply, message, bot)
     }
 }
 
-export async function initChat(sessionId, bot) {
+export async function initChat(talkerId, message, bot) {
     let chatId = await applyChat();
-    chatSession[sessionId] = chatId;
+    chatSession[talkerId] = chatId;
     let reply = await sendMsg(chatId, '/init', '/init');
     if (reply) {
-        return await processMessage(reply, bot)
+        return await processMessage(reply, message, bot)
     } else {
         log.info('init chat failed!')
-        return await bot.say('初始化会话失败！')
+        return await message.say('初始化会话失败！')
     }
 }
 
@@ -91,12 +95,13 @@ export function isAttachment(value) {
     return false;
 }
 
-export async function processMessage(reply, bot) {
+export async function processMessage(reply, message, bot) {
     const answers =
         reply.answers?.length > 0
             ? reply.answers.filter((m) => !m.custom)
             : [{text: '换个问题试一试'}];
 
+    log.info(`'rec ans:'${JSON.stringify(answers)}`)
     for (let i = 0; i < answers.length; i++) {
         let item = answers[i]
         //1. 处理按钮回复 暂时忽略
@@ -109,7 +114,7 @@ export async function processMessage(reply, bot) {
             log.info(`image url:${getBaseUrl() + item.image}`)
             const fileBox = FileBox.fromUrl(getBaseUrl() + item.image, `${item.image + '.jpeg'}`)
             //发送图片
-            await bot.say(fileBox)
+            await message.say(fileBox)
         }
 
         //3. 处理文件回复
@@ -119,12 +124,12 @@ export async function processMessage(reply, bot) {
 
             const fileBox = FileBox.fromUrl(getBaseUrl() + files.href, files.name)
             //发送图片
-            await bot.say(fileBox)
+            await message.say(fileBox)
             return
         }
         //4. 处理文本回复
         if (item.text) {
-            await bot.say(item.text);
+            await message.say(item.text);
         }
     }
 }
