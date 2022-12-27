@@ -6,8 +6,10 @@ import {getBaseUrl} from '../utils/request.js'
 
 let username
 let chatSession = {}
+const FALLBACK = '换个问题试一试'
+const CHAT_ID_EXPIRE_SPAN = 10
 
-export function onScan(qrcode, status) {
+export async function onScan(qrcode, status) {
     if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
         qrTerm.generate(qrcode, {small: true}); // show qrcode on console
 
@@ -28,12 +30,12 @@ export function onScan(qrcode, status) {
     }
 }
 
-export function onLogin(user) {
+export async function onLogin(user) {
     log.info("StarterBot", "%s login", user);
     username = user.name()
 }
 
-export function onLogout(user) {
+export async function onLogout(user) {
     log.info("StarterBot", "%s logout", user);
     username = user.name()
 }
@@ -42,14 +44,26 @@ export async function onMessage(message, bot) {
 
     log.info("StarterBot ******", JSON.stringify(message));
     let msg = message.text();
+
     let talkerId = message?.payload?.talkerId
 
     // 1. 会话初始化
     if (msg.startsWith("@" + username + ' 初始化会话') || chatSession[talkerId] === undefined) {
-        return await initChat(talkerId, message, bot)
+        let blnInitChat = await initChat(talkerId, message, bot)
+        if (!blnInitChat) {
+            return await message.say(FALLBACK)
+        }
     }
     // 2. 处理发送的消息
-    let chatId = chatSession[talkerId]
+    let chat = chatSession[talkerId]
+    // 3. chat是否过期
+    if (chatExpires(chat)) {
+        let blnInitChat = await initChat(talkerId, message, bot)
+        if (!blnInitChat) {
+            return await message.say(FALLBACK)
+        }
+    }
+    let chatId = chatSession[talkerId]['chatId']
     log.info(`talkerId:${talkerId}, chatId:${chatId}`)
     if (msg.startsWith("@" + username) && chatId !== undefined) {
 
@@ -64,13 +78,18 @@ export async function onMessage(message, bot) {
 
 export async function initChat(talkerId, message, bot) {
     let chatId = await applyChat();
-    chatSession[talkerId] = chatId;
+    let now = Date.parse(new Date())
+    chatSession[talkerId] = {
+        chatId: chatId,
+        expires: now + CHAT_ID_EXPIRE_SPAN,
+    };
     let reply = await sendMsg(chatId, '/init', '/init');
     if (reply) {
-        return await processMessage(reply, message, bot)
+        log.info('init chat success!')
+        return true
     } else {
         log.info('init chat failed!')
-        return await message.say('初始化会话失败！')
+        return false
     }
 }
 
@@ -99,7 +118,7 @@ export async function processMessage(reply, message, bot) {
     const answers =
         reply.answers?.length > 0
             ? reply.answers.filter((m) => !m.custom)
-            : [{text: '换个问题试一试'}];
+            : [{text: FALLBACK}];
 
     log.info(`'rec ans:'${JSON.stringify(answers)}`)
     for (let i = 0; i < answers.length; i++) {
@@ -132,4 +151,16 @@ export async function processMessage(reply, message, bot) {
             await message.say(item.text);
         }
     }
+}
+
+export function chatExpires(chat) {
+    if (chat === undefined || chat['expires'] === undefined) {
+        return true
+    }
+    let expires = chat['expires']
+    let now = Date.parse(new Date())
+    if (now < expires) {
+        return false
+    }
+    return true
 }
