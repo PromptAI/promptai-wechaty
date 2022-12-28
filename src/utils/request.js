@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {log} from "wechaty";
 
 let baseURL = 'http://flow2.pcc.pub:8091'
 const publishedProject = {
@@ -63,6 +64,10 @@ instance.interceptors.response.use(
             status,
         } = error.response || {};
         let data = error.response.data;
+        log.info(`${JSON.stringify(data)}`)
+        if (status === 400 || status === 401 || status === 404) {
+            return Promise.reject(data);
+        }
         if (data instanceof Blob) {
             const text = await data.text();
             try {
@@ -71,9 +76,7 @@ instance.interceptors.response.use(
                 // no handle
             }
         }
-        if (status === 400 || status === 401 || status === 404) {
-            return Promise.reject(data);
-        }
+
         return Promise.reject(data);
     }
 );

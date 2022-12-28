@@ -8,7 +8,7 @@ let username
 let chatSession = {}
 const FALLBACK = '换个问题试一试'
 const CHAT_ID_EXPIRE_SPAN = 300 //chat 默认过期时间:秒
-let CALL_BOT_CONFIG = ['@智能客服', '@薛辉', '@谷白','智能客服', '薛辉', '谷白',"小Z","小维"]
+let CALL_BOT_CONFIG = ['@智能客服', '@薛辉', '@谷白', '智能客服', '薛辉', '谷白', "小Z", "小维", 'cc', 'CC']
 
 export async function onScan(qrcode, status) {
     if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
@@ -34,31 +34,56 @@ export async function onScan(qrcode, status) {
 export async function onLogin(user) {
     log.info("StarterBot", "%s login", user);
     username = user.name()
+    CALL_BOT_CONFIG.push(username)
+
 }
 
 export async function onLogout(user) {
     log.info("StarterBot", "%s logout", user);
     username = user.name()
-    CALL_BOT_CONFIG.push(username)
 }
 
 export async function onMessage(message, bot) {
 
-    log.info("StarterBot ******", JSON.stringify(message));
-    let msg = message.text();
+    //不处理非文本内容
+    if (message.type() !== bot.Message.Type.Text) {
+        return
+    }
+
+    log.info(`StarterBot,receive message from user:${JSON.stringify(message)}`,);
+    let msg = message.text()
+    const fromContact = message.talker()
+    const toContact = message.listener()
+    //非个人消息不回复
+    if (fromContact?.type() !== bot.Contact.Type.Individual) {
+        log.info(`need not reply,it's not from Individual. from contact type:${fromContact.type()}`)
+        return
+    }
+
+    let blnFriend = toContact?.self()
+    log.info(`message from friend:${blnFriend}`,);
 
     let talkerId = message?.payload?.talkerId
 
+    let blnNeedReply = blnFriend || false
+    for (let i = 0; i < CALL_BOT_CONFIG.length; i++) {
+        if (msg.indexOf(CALL_BOT_CONFIG[i]) !== -1) {
+            msg = msg.replace(CALL_BOT_CONFIG[i], '')
+            blnNeedReply = true
+            break
+        }
+
+    }
+    log.info(`blnFriend: ${blnFriend},blnNeedReply:${blnNeedReply}`)
     // 1. 会话初始化
-    if (msg.startsWith("@" + username + ' 初始化会话') || chatSession[talkerId] === undefined) {
+    if (blnNeedReply && chatSession[talkerId] === undefined) {
         let blnInitChat = await initChat(talkerId, message, bot)
         if (!blnInitChat) {
             return await message.say(FALLBACK)
         }
     }
-    // 2. 处理发送的消息
     let chat = chatSession[talkerId]
-    // 3. chat是否过期
+    // 2. chat是否过期
     if (chatExpires(chat)) {
         let blnInitChat = await initChat(talkerId, message, bot)
         if (!blnInitChat) {
@@ -68,20 +93,10 @@ export async function onMessage(message, bot) {
     let chatId = chatSession[talkerId]['chatId']
     log.info(`talkerId:${talkerId}, chatId:${chatId}`)
 
-    let blnNeedReply =false
-    for (let i = 0; i < CALL_BOT_CONFIG.length; i++) {
-        if (msg.indexOf(CALL_BOT_CONFIG[i]) !== -1) {
-            msg =  msg.replace(CALL_BOT_CONFIG[i],'')
-            blnNeedReply =true
-            break
-        }
-
-    }
+    // 3. 处理发送的消息
     if (blnNeedReply && chatId !== undefined) {
-
         log.info(`send msg to chat:'${talkerId},message:${msg} `)
         let reply = await sendMsg(chatId, msg, msg);
-
         log.info(`msg reply from bot:${JSON.stringify(reply)}`)
         await processMessage(reply, message, bot)
     }
@@ -131,7 +146,7 @@ export async function processMessage(reply, message, bot) {
             ? reply.answers.filter((m) => !m.custom)
             : [{text: FALLBACK}];
 
-    log.info(`'rec ans:'${JSON.stringify(answers)}`)
+    log.info(`'bot answers:'${JSON.stringify(answers)}`)
     for (let i = 0; i < answers.length; i++) {
         let item = answers[i]
         //1. 处理按钮回复 暂时忽略
@@ -151,7 +166,6 @@ export async function processMessage(reply, message, bot) {
         if (isAttachment(item.text)) {
             let files = decodeAttachmentText(item.text)
             log.info(`file url: ${getBaseUrl() + files.href}`)
-
             const fileBox = FileBox.fromUrl(getBaseUrl() + files.href, files.name)
             //发送图片
             await message.say(fileBox)
@@ -180,7 +194,7 @@ export function needReply(msg) {
 
     for (let i = 0; i < CALL_BOT_CONFIG.length; i++) {
         if (msg.indexOf(CALL_BOT_CONFIG[i]) !== -1) {
-            msg =  msg.replace(CALL_BOT_CONFIG[i],'')
+            msg = msg.replace(CALL_BOT_CONFIG[i], '')
             log.info(`msg replaced: ${msg}`)
             return true
         }
