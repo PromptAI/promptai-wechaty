@@ -7,7 +7,8 @@ import {getBaseUrl} from '../utils/request.js'
 let username
 let chatSession = {}
 const FALLBACK = '换个问题试一试'
-const CHAT_ID_EXPIRE_SPAN = 10
+const CHAT_ID_EXPIRE_SPAN = 300 //chat 默认过期时间:秒
+let CALL_BOT_CONFIG = ['@智能客服', '@薛辉', '@谷白','智能客服', '薛辉', '谷白',"小Z","小维"]
 
 export async function onScan(qrcode, status) {
     if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
@@ -38,6 +39,7 @@ export async function onLogin(user) {
 export async function onLogout(user) {
     log.info("StarterBot", "%s logout", user);
     username = user.name()
+    CALL_BOT_CONFIG.push(username)
 }
 
 export async function onMessage(message, bot) {
@@ -65,11 +67,20 @@ export async function onMessage(message, bot) {
     }
     let chatId = chatSession[talkerId]['chatId']
     log.info(`talkerId:${talkerId}, chatId:${chatId}`)
-    if (msg.startsWith("@" + username) && chatId !== undefined) {
 
-        log.info(`'rec from:'${talkerId},message:${msg} `)
-        let chatMsg = msg.substr(username.length + 1);
-        let reply = await sendMsg(chatId, chatMsg, chatMsg);
+    let blnNeedReply =false
+    for (let i = 0; i < CALL_BOT_CONFIG.length; i++) {
+        if (msg.indexOf(CALL_BOT_CONFIG[i]) !== -1) {
+            msg =  msg.replace(CALL_BOT_CONFIG[i],'')
+            blnNeedReply =true
+            break
+        }
+
+    }
+    if (blnNeedReply && chatId !== undefined) {
+
+        log.info(`send msg to chat:'${talkerId},message:${msg} `)
+        let reply = await sendMsg(chatId, msg, msg);
 
         log.info(`msg reply from bot:${JSON.stringify(reply)}`)
         await processMessage(reply, message, bot)
@@ -163,4 +174,17 @@ export function chatExpires(chat) {
         return false
     }
     return true
+}
+
+export function needReply(msg) {
+
+    for (let i = 0; i < CALL_BOT_CONFIG.length; i++) {
+        if (msg.indexOf(CALL_BOT_CONFIG[i]) !== -1) {
+            msg =  msg.replace(CALL_BOT_CONFIG[i],'')
+            log.info(`msg replaced: ${msg}`)
+            return true
+        }
+
+    }
+    return false
 }
