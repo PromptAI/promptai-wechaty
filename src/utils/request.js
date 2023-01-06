@@ -2,8 +2,27 @@ const axios = require("axios");
 const { log } = require("wechaty");
 const config = require("../../config");
 
-const { baseURL, projectId, publishedProjectId, publishedProjectToken } =
-  config;
+const isStrEmpty = (val) => {
+  if (typeof val !== "string") return true;
+  if (val === "") return true;
+  return false;
+};
+const checkFields = ["baseURL", "id", "project", "token"];
+const checkConfig = () => {
+  checkFields.forEach((field) => {
+    if (isStrEmpty(config[field]))
+      throw new Error(
+        `**** config error: [${field}] is error value, check your config. *****`
+      );
+  });
+  return config;
+};
+const {
+  baseURL,
+  id: projectId,
+  project: publishedProjectId,
+  token: publishedProjectToken,
+} = checkConfig();
 const publishedProject = {
   projectId,
   publishedProjectId,
@@ -57,19 +76,11 @@ instance.interceptors.response.use(
   async (error) => {
     const { status } = error.response || {};
     let data = error.response.data;
-    log.info(`${JSON.stringify(data)}`);
     if (status === 400 || status === 401 || status === 404) {
+      log.error(`**** response error: checked your config ****`);
       return Promise.reject(data);
     }
-    if (data instanceof Blob) {
-      const text = await data.text();
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        // no handle
-      }
-    }
-
+    log.error(`**** response error: unknown error, please contact us. ****`);
     return Promise.reject(data);
   }
 );
