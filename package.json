@@ -2,8 +2,7 @@
   "name": "webchat-flow",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "type": "module",
+  "main": "src/main.js",
   "scripts": {
     "start": "WECHATY_LOG=verbose WECHATY_PUPPET=wechaty-puppet-wechat node src/main.js"
   },
@@ -11,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@grpc/grpc-js": "^1.8.1",
+    "axios": "^1.2.2",
     "qrcode-terminal": "^0.12.0",
     "wechaty": "^1.20.2",
     "wechaty-puppet-wechat": "^1.18.4"

@@ -1,5 +1,5 @@
-import { get, post, del } from '../utils/request.js';
+const { get } = require("../utils/request");
 
-export async function apply() {
-    return get('/chat/api/chat');
-}
+exports.apply = async function apply() {
+  return get("/chat/api/chat");
+};
