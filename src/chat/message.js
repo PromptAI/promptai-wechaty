@@ -3,23 +3,13 @@ const qrTerm = require("qrcode-terminal");
 const { applyChat, sendMsg } = require("./chatbot");
 const { FileBox } = require("file-box");
 const { getBaseUrl } = require("../utils/request");
+const config = require("../../config");
 
 let username;
 let chatSession = {};
-const FALLBACK = "换个问题试一试";
+const FALLBACK = config.fallback || "换个问题试一试";
 const CHAT_ID_EXPIRE_SPAN = 300; //chat 默认过期时间:秒
-let CALL_BOT_CONFIG = [
-  "@智能客服",
-  "@薛辉",
-  "@谷白",
-  "智能客服",
-  "薛辉",
-  "谷白",
-  "小Z",
-  "小维",
-  "cc",
-  "CC",
-];
+let CALL_BOT_CONFIG = config.wakeWords || [];
 
 exports.onScan = async function onScan(qrcode, status) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
