@@ -21,6 +21,9 @@ config.js还有其他的可选配置项：
 ## 启动
 
 ``` shell
+# 第一次启动需要先安装一列
+yarn install
+# 启动
 yarn start
 ```
 然后微信扫描命令行输出的二维码登录
