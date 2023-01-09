@@ -21,7 +21,7 @@ config.js还有其他的可选配置项：
 ## 启动
 
 ``` shell
-# 第一次启动需要先安装一列
+# 第一次启动需要先安装依赖
 yarn install
 # 启动
 yarn start
@@ -30,7 +30,4 @@ yarn start
 
 
 ## 其他
- 
-1、图片暂不支持
-
-2、如果其他需求或疑问，请访问官网：https://promptai.cn 获取帮助。
+1、如果其他需求或疑问，请访问官网：https://promptai.cn 获取帮助。
