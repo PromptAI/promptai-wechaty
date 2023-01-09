@@ -19,8 +19,8 @@ const checkConfig = () => {
 };
 const {
   baseURL,
-  id: projectId,
-  project: publishedProjectId,
+  id: publishedProjectId,
+  project:projectId ,
   token: publishedProjectToken,
 } = checkConfig();
 const publishedProject = {
@@ -45,8 +45,7 @@ instance.interceptors.request.use(
     headers["Content-Type"] = contentType;
     headers["x-project-id"] = publishedProject.projectId;
     headers["x-published-project-id"] = publishedProject.publishedProjectId;
-    headers["x-published-project-token"] =
-      publishedProject.publishedProjectToken;
+    headers["x-published-project-token"] = publishedProject.publishedProjectToken;
     return options;
   },
   (error) => {
