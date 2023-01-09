@@ -14,7 +14,7 @@ class Chat {
   static DEFAULT_FALLBACK = "换个问题试一试";
   constructor(config) {
     this.config = config;
-    this.wakeWords.push(config.wakeWords);
+    this.wakeWords = config.wakeWords;
 
     const wechaty = WechatyBuilder.build({
       name: "Wechaty-Prompt-AI",
@@ -77,7 +77,6 @@ class Chat {
   }
   async _onLogout(user) {
     log.info("StarterBot", "%s logout", user);
-    this.username = user.name();
   }
   async _onMessage(message) {
     //不处理非文本内容
