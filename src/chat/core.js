@@ -30,7 +30,7 @@ class Chat {
     this.wechaty
       .start()
       .then(() => log.info("StarterBot", "Starter Bot Started."))
-      .catch((e) => log.error("StarterBot", JSON.stringify(e)));
+      .catch((e) => log.error(`StarterBot.error:${JSON.stringify(e)}`));
   }
   _isExpireSession(tallId) {
     const session = this.chatSession[tallId];
@@ -44,7 +44,7 @@ class Chat {
       try {
         await this._initChat(tallId);
       } catch (e) {
-        log.error("init session is error", JSON.stringify(e));
+        log.error(`init session is error:${JSON.stringify(e)}`);
         await messager.say(this.config.fallback || Chat.DEFAULT_FALLBACK);
         throw new Error("[INIT SESSION] is error");
       }

@@ -1,0 +1,12 @@
+version: "3.5"
+
+services:
+  flow_plugins:
+    build:
+      context: ./
+#    image: goobai/flow_plugins:1.0
+    volumes:
+      - /Users/admin/code/flow_plugin/config:/data/config
+    stdin_open: true
+    tty: true
+

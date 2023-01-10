@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { log } = require("wechaty");
-const config = require("../../config");
+const config = require("../config/config");
 
 const isStrEmpty = (val) => {
   if (typeof val !== "string") return true;

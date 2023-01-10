@@ -3,7 +3,7 @@ const qrTerm = require("qrcode-terminal");
 const { applyChat, sendMsg } = require("./chatbot");
 const { FileBox } = require("file-box");
 const { getBaseUrl } = require("../utils/request");
-const config = require("../../config");
+const config = require("../config/config");
 
 let username;
 let chatSession = {};
