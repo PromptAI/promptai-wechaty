@@ -5,7 +5,7 @@
 ```text
 https://app.promptai.cn/ava/?name=Prompt+AI&id=a1_p_c4c9iurlzdhc&token=YjhiZDRhOWMtNDhlMi00NWVjLTgxMWMtZGNjODU2NjRhYWRh&project=p_c4c9iurlzdhc
 ```
-链接中有三个参数分别与config.js 对应
+链接中有三个参数分别与src/config/config.js 对应
  - id     
  - token   
  - project 
